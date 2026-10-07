@@ -1,9 +1,19 @@
-menu "Waveshare ESP32-C5-Touch-LCD-2.8"
+menu "Waveshare ESP32-C5-LCD-1.47"
     config C5VRX_WAVESHARE_LCD
         bool "Build Waveshare ST7789 LCD backend"
         default n
         help
             Build support for the onboard 320x240 landscape ST7789 display.
+
+    config C5VRX_WAVESHARE_RF_LCD_TEST
+        bool "RF + LCD coexistence test"
+        depends on C5VRX_WAVESHARE_LCD
+        default n
+        help
+            Keep the LCD color bars active while starting the C5VRX RF
+            frontend and 40 MS/s 8-bit PARLIO RX. The resistor-DAC/PARLIO-TX
+            video path is not started. This mode remaps the two IQ lanes that
+            collide with the LCD.
 
     config C5VRX_WAVESHARE_LCD_SMOKE_TEST
         bool "Display-only LCD smoke test"
@@ -55,10 +65,12 @@ menu "C5VRX board and video DAC"
     config C5VRX_IQ_D3_GPIO
         int "IQ bit 3 GPIO" if C5VRX_CUSTOM_BOARD
         range -1 28
+        default 2 if C5VRX_WAVESHARE_RF_LCD_TEST
         default 7
     config C5VRX_IQ_D4_GPIO
         int "IQ bit 4 GPIO" if C5VRX_CUSTOM_BOARD
         range -1 28
+        default 9 if C5VRX_WAVESHARE_RF_LCD_TEST
         default 10
     config C5VRX_IQ_D5_GPIO
         int "IQ bit 5 GPIO" if C5VRX_CUSTOM_BOARD
