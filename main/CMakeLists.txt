@@ -1,22 +1,32 @@
+set(C5VRX_SRCS
+    "main.c"
+    "board_config.c"
+    "bs_relative_worker_probe.c"
+    "bs_relative_middle_probe.c"
+    "phy_phase_tap_probe.c"
+    "bs_addctia_probe.c"
+    "arc_phy.c"
+    "arc_v3_controller.c"
+    "arc_v5_autotune.c"
+    "rx_auto_lab.c"
+    "rf.c"
+    "video.c"
+    "direct_gain.c"
+    "direct_gain_v2.c"
+    "direct_gain_v3.c"
+    "analog_video_detect.c"
+    "menu_raster.c"
+)
+
+if(CONFIG_C5VRX_WAVESHARE_LCD)
+    list(APPEND C5VRX_SRCS
+        "waveshare_lcd.c"
+        "waveshare_board_power.c"
+    )
+endif()
+
 idf_component_register(
-    SRCS
-        "main.c"
-        "board_config.c"
-        "bs_relative_worker_probe.c"
-        "bs_relative_middle_probe.c"
-        "phy_phase_tap_probe.c"
-        "bs_addctia_probe.c"
-        "arc_phy.c"
-        "arc_v3_controller.c"
-        "arc_v5_autotune.c"
-        "rx_auto_lab.c"
-        "rf.c"
-        "video.c"
-        "direct_gain.c"
-        "direct_gain_v2.c"
-        "direct_gain_v3.c"
-        "analog_video_detect.c"
-        "menu_raster.c"
+    SRCS ${C5VRX_SRCS}
     INCLUDE_DIRS "."
     REQUIRES
         esp_wifi
@@ -28,6 +38,9 @@ idf_component_register(
         esp_driver_gpio
         esp_driver_bitscrambler
         esp_driver_usb_serial_jtag
+        esp_driver_spi
+        esp_driver_i2c
+        esp_lcd
         vfs
         esp_rom
         esp_mm
