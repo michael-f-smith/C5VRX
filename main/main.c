@@ -97,6 +97,9 @@ void app_main(void)
 
     ESP_ERROR_CHECK(c5vrx_waveshare_rf_lcd_rx_start());
     ESP_LOGI(TAG, "RF/LCD coexistence test running");
+
+    ESP_ERROR_CHECK(c5vrx_waveshare_rf_lcd_preview_start());
+    ESP_LOGI(TAG, "first-light grayscale decoder running");
 }
 
 #else
