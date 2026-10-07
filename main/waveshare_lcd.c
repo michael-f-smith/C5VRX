@@ -6,6 +6,7 @@
 #include "driver/ledc.h"
 #include "driver/spi_master.h"
 #include "esp_heap_caps.h"
+#include "esp_check.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_st7789.h"
