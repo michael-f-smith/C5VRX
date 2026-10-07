@@ -2,6 +2,8 @@
  * main.c - C5VRX application entry point.
  */
 
+#include "sdkconfig.h"
+
 #if CONFIG_C5VRX_WAVESHARE_LCD_SMOKE_TEST
 
 #include "waveshare_lcd.h"
