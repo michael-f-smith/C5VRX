@@ -286,7 +286,8 @@ static void preview_task(void *arg)
                      bit_ones[0], bit_ones[1], bit_ones[2], bit_ones[3],
                      bit_ones[4], bit_ones[5], bit_ones[6], bit_ones[7]);
             unsigned eq01=0, eq12=0, eq23=0, eq45=0, eq56=0, eq67=0;
-            unsigned uniq[256] = {0}, uniq_count = 0;
+            uint32_t uniq_bits[8] = {0};
+            unsigned uniq_count = 0;
             for (unsigned i = 0; i < 4096; ++i) {
                 uint8_t v = s_raw_ring[i];
                 eq01 += (((v >> 0) ^ (v >> 1)) & 1u) == 0;
@@ -295,7 +296,9 @@ static void preview_task(void *arg)
                 eq45 += (((v >> 4) ^ (v >> 5)) & 1u) == 0;
                 eq56 += (((v >> 5) ^ (v >> 6)) & 1u) == 0;
                 eq67 += (((v >> 6) ^ (v >> 7)) & 1u) == 0;
-                if (!uniq[v]) { uniq[v] = 1; ++uniq_count; }
+                uint32_t mask = 1u << (v & 31u);
+                uint32_t *word = &uniq_bits[v >> 5u];
+                if ((*word & mask) == 0u) { *word |= mask; ++uniq_count; }
             }
             ESP_LOGI(TAG, "IQ lane equality/4096: 01=%u 12=%u 23=%u 45=%u 56=%u 67=%u unique_bytes=%u",
                      eq01, eq12, eq23, eq45, eq56, eq67, uniq_count);
@@ -308,7 +311,8 @@ static void preview_task(void *arg)
             unsigned pad_ones[8] = {0};
             unsigned pad_eq01=0, pad_eq12=0, pad_eq23=0;
             unsigned pad_eq45=0, pad_eq56=0, pad_eq67=0;
-            unsigned pad_unique[256] = {0}, pad_unique_count = 0;
+            uint32_t pad_unique_bits[8] = {0};
+            unsigned pad_unique_count = 0;
             for (unsigned n = 0; n < 4096; ++n) {
                 uint8_t v = 0;
                 for (unsigned b = 0; b < 8; ++b) {
@@ -322,7 +326,9 @@ static void preview_task(void *arg)
                 pad_eq45 += (((v >> 4) ^ (v >> 5)) & 1u) == 0;
                 pad_eq56 += (((v >> 5) ^ (v >> 6)) & 1u) == 0;
                 pad_eq67 += (((v >> 6) ^ (v >> 7)) & 1u) == 0;
-                if (!pad_unique[v]) { pad_unique[v] = 1; ++pad_unique_count; }
+                uint32_t mask = 1u << (v & 31u);
+                uint32_t *word = &pad_unique_bits[v >> 5u];
+                if ((*word & mask) == 0u) { *word |= mask; ++pad_unique_count; }
             }
             ESP_LOGI(TAG, "PAD bit ones/4096: b0=%u b1=%u b2=%u b3=%u b4=%u b5=%u b6=%u b7=%u",
                      pad_ones[0], pad_ones[1], pad_ones[2], pad_ones[3],
