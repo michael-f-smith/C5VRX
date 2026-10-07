@@ -52,6 +52,53 @@ void app_main(void)
     lcd_smoke_test();
 }
 
+#elif CONFIG_C5VRX_WAVESHARE_RF_LCD_TEST
+
+#include "waveshare_lcd.h"
+#include "waveshare_rf_lcd_test.h"
+#include "rf.h"
+#include "esp_err.h"
+#include "esp_heap_caps.h"
+#include "esp_log.h"
+
+static const char *TAG = "c5vrx_rf_lcd_test";
+static uint16_t *s_test_frame;
+
+static void draw_coexistence_bars(void)
+{
+    const size_t pixels = C5VRX_LCD_WIDTH * C5VRX_LCD_HEIGHT;
+    s_test_frame = heap_caps_malloc(pixels * sizeof(*s_test_frame),
+                                    MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+    ESP_ERROR_CHECK(s_test_frame ? ESP_OK : ESP_ERR_NO_MEM);
+    static const uint16_t bars[] = {
+        0xF800, 0x07E0, 0x001F, 0xFFFF, 0x0000, 0xFFE0, 0x07FF, 0xF81F,
+    };
+    for (unsigned y = 0; y < C5VRX_LCD_HEIGHT; ++y) {
+        for (unsigned x = 0; x < C5VRX_LCD_WIDTH; ++x) {
+            s_test_frame[y * C5VRX_LCD_WIDTH + x] =
+                bars[(x * (sizeof(bars) / sizeof(bars[0]))) / C5VRX_LCD_WIDTH];
+        }
+    }
+    ESP_ERROR_CHECK(c5vrx_waveshare_lcd_draw_bitmap(
+        0, 0, C5VRX_LCD_WIDTH, C5VRX_LCD_HEIGHT, s_test_frame));
+}
+
+void app_main(void)
+{
+    ESP_LOGI(TAG, "Waveshare RF + LCD coexistence test; analog video TX/DAC disabled");
+    ESP_LOGI(TAG, "IQ GPIO map: D0=1 D1=0 D2=25 D3=2 D4=9 D5=5 D6=3 D7=4");
+
+    ESP_ERROR_CHECK(c5vrx_waveshare_lcd_init());
+    draw_coexistence_bars();
+    ESP_LOGI(TAG, "LCD heartbeat ready");
+
+    ESP_ERROR_CHECK(rf_start());
+    ESP_LOGI(TAG, "RF frontend ready");
+
+    ESP_ERROR_CHECK(c5vrx_waveshare_rf_lcd_rx_start());
+    ESP_LOGI(TAG, "RF/LCD coexistence test running");
+}
+
 #else
 
 #include "rf.h"
