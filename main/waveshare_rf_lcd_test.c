@@ -137,9 +137,11 @@ static void preview_task(void *arg)
         /* RX DMA writes behind the CPU cache. Invalidate the ring before
          * observing it; without this the task can keep seeing the zero-filled
          * cache lines that existed before PARLIO started. */
-        (void)esp_cache_msync(s_raw_ring, sizeof(s_raw_ring),
-                              ESP_CACHE_MSYNC_FLAG_DIR_M2C |
-                              ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+        /* s_raw_ring is internal SRAM and is directly CPU coherent on this
+         * target. esp_cache_msync() rejects this address class, so do not call
+         * it here. The changing raw-byte diagnostic below verifies that GDMA
+         * writes are visible to the CPU. */
+        __asm__ __volatile__("fence rw, rw" ::: "memory");
 
         /*
          * First-light observer only: RX continuously overwrites this cyclic
