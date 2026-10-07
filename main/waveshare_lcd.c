@@ -1,4 +1,5 @@
 #include "waveshare_lcd.h"
+#include "waveshare_board_power.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -25,6 +26,9 @@ esp_err_t c5vrx_waveshare_lcd_init(void)
 {
     if (s_ready) return ESP_OK;
 
+    esp_err_t err = c5vrx_waveshare_lcd_reset();
+    if (err != ESP_OK) return err;
+
     const spi_bus_config_t bus = {
         .sclk_io_num = LCD_SCLK_GPIO,
         .mosi_io_num = LCD_MOSI_GPIO,
@@ -33,7 +37,7 @@ esp_err_t c5vrx_waveshare_lcd_init(void)
         .quadhd_io_num = -1,
         .max_transfer_sz = C5VRX_LCD_WIDTH * 40u * sizeof(uint16_t),
     };
-    esp_err_t err = spi_bus_initialize(LCD_HOST, &bus, SPI_DMA_CH_AUTO);
+    err = spi_bus_initialize(LCD_HOST, &bus, SPI_DMA_CH_AUTO);
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE) return err;
 
     const esp_lcd_panel_io_spi_config_t io_cfg = {
@@ -48,7 +52,6 @@ esp_err_t c5vrx_waveshare_lcd_init(void)
     err = esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_HOST, &io_cfg, &s_io);
     if (err != ESP_OK) return err;
 
-    /* LCD reset/backlight are controlled by the Waveshare CH32V003 expander. */
     const esp_lcd_panel_dev_config_t panel_cfg = {
         .reset_gpio_num = -1,
         .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_RGB,
@@ -63,6 +66,9 @@ esp_err_t c5vrx_waveshare_lcd_init(void)
     if ((err = esp_lcd_panel_disp_on_off(s_panel, true)) != ESP_OK) return err;
 
     s_ready = true;
+    err = c5vrx_waveshare_backlight_set(100);
+    if (err != ESP_OK) return err;
+
     ESP_LOGI(TAG, "ST7789 ready: %ux%u landscape @ %u MHz SPI",
              C5VRX_LCD_WIDTH, C5VRX_LCD_HEIGHT, LCD_PCLK_HZ / 1000000u);
     return ESP_OK;
