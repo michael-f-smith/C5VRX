@@ -259,8 +259,23 @@ static void preview_task(void *arg)
                 if (v > maxv) maxv = v;
                 last = v;
             }
-            ESP_LOGI(TAG, "IQ window: min=%u max=%u nonzero=%u/4096 changes=%u",
-                     minv, maxv, nonzero, changes);
+            unsigned nibble_mixed = 0, hi_only = 0, lo_only = 0, both = 0;
+            unsigned hist[16] = {0};
+            for (unsigned i = 0; i < 4096; ++i) {
+                uint8_t v = s_raw_ring[i];
+                bool hi = (v & 0xf0u) != 0;
+                bool lo = (v & 0x0fu) != 0;
+                if (hi && lo) ++both;
+                else if (hi) ++hi_only;
+                else if (lo) ++lo_only;
+                if (hi && lo) ++nibble_mixed;
+                ++hist[v & 0x0fu];
+            }
+            ESP_LOGI(TAG, "IQ window: min=%u max=%u nonzero=%u/4096 changes=%u nibble both=%u hi=%u lo=%u",
+                     minv, maxv, nonzero, changes, both, hi_only, lo_only);
+            ESP_LOGI(TAG, "IQ low-nibble hist: %u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
+                     hist[0],hist[1],hist[2],hist[3],hist[4],hist[5],hist[6],hist[7],
+                     hist[8],hist[9],hist[10],hist[11],hist[12],hist[13],hist[14],hist[15]);
             const char *std = report_pal > report_ntsc ? "PAL" :
                               report_ntsc > report_pal ? "NTSC" : "?";
             ESP_LOGI(TAG, "preview sync: hsync=%u/s ntsc_votes=%u pal_votes=%u standard=%s row=%u parity=%u hits=%u/%u",
