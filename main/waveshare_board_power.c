@@ -33,6 +33,8 @@ esp_err_t c5vrx_waveshare_board_power_init(void)
         .sda_io_num = WS_I2C_SDA,
         .scl_io_num = WS_I2C_SCL,
         .clk_source = I2C_CLK_SRC_DEFAULT,
+        .glitch_ignore_cnt = 7,
+        .flags.enable_internal_pullup = true,
     };
 
     esp_err_t err = i2c_new_master_bus(&i2c_cfg, &s_i2c);
@@ -47,7 +49,7 @@ esp_err_t c5vrx_waveshare_board_power_init(void)
      * Probe the CH32 before constructing the expander object.  This makes a
      * wiring/address/NACK failure distinguishable from a driver reset failure.
      */
-    err = i2c_master_probe(s_i2c, WS_CH32_ADDR, 100);
+    err = i2c_master_probe(s_i2c, WS_CH32_ADDR, 250);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "CH32V003 not responding at I2C address 0x%02x: %s",
                  WS_CH32_ADDR, esp_err_to_name(err));
