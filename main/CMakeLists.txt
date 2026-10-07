@@ -7,7 +7,6 @@ if(CONFIG_C5VRX_WAVESHARE_LCD_SMOKE_TEST)
     # BitScrambler paths: the stock IQ GPIO map overlaps the Waveshare LCD/I2C
     # pins and must be resolved before integrated receiver operation.
     list(APPEND c5vrx_srcs
-        "waveshare_board_power.c"
         "waveshare_lcd.c"
     )
 else()
