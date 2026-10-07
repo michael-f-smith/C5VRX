@@ -276,6 +276,14 @@ static void preview_task(void *arg)
             ESP_LOGI(TAG, "IQ low-nibble hist: %u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
                      hist[0],hist[1],hist[2],hist[3],hist[4],hist[5],hist[6],hist[7],
                      hist[8],hist[9],hist[10],hist[11],hist[12],hist[13],hist[14],hist[15]);
+            unsigned bit_ones[8] = {0};
+            for (unsigned i = 0; i < 4096; ++i) {
+                uint8_t v = s_raw_ring[i];
+                for (unsigned b = 0; b < 8; ++b) bit_ones[b] += (v >> b) & 1u;
+            }
+            ESP_LOGI(TAG, "IQ bit ones/4096: b0=%u b1=%u b2=%u b3=%u b4=%u b5=%u b6=%u b7=%u",
+                     bit_ones[0], bit_ones[1], bit_ones[2], bit_ones[3],
+                     bit_ones[4], bit_ones[5], bit_ones[6], bit_ones[7]);
             const char *std = report_pal > report_ntsc ? "PAL" :
                               report_ntsc > report_pal ? "NTSC" : "?";
             ESP_LOGI(TAG, "preview sync: hsync=%u/s ntsc_votes=%u pal_votes=%u standard=%s row=%u parity=%u hits=%u/%u",
