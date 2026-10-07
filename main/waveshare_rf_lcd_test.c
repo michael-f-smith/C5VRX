@@ -232,10 +232,10 @@ static void preview_task(void *arg)
              * active-video position. Sample 1000 20-MS/s points into 320 px. */
             unsigned active = run_start + 190u;
             if (active + 1000u >= RAW_RING_BYTES / 2u) continue;
-            uint8_t p = s_phase5_state_lut[s_raw_ring[active * 2u + 1u]];
+            uint8_t p = s_phase5_state_lut[s_raw_ring[active * 2u + parity]];
             for (unsigned x = 0; x < C5VRX_LCD_WIDTH; ++x) {
                 unsigned sn = active + (x * 1000u) / C5VRX_LCD_WIDTH;
-                uint8_t q = s_phase5_state_lut[s_raw_ring[sn * 2u + 1u]];
+                uint8_t q = s_phase5_state_lut[s_raw_ring[sn * 2u + parity]];
                 line[x] = gray565(preview_luma(p, q));
                 p = q;
             }
