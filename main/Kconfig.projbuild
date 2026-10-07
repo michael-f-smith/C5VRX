@@ -1,3 +1,21 @@
+menu "Waveshare ESP32-C5-Touch-LCD-2.8"
+    config C5VRX_WAVESHARE_LCD
+        bool "Build Waveshare ST7789 LCD backend"
+        default n
+        help
+            Build support for the onboard 320x240 landscape ST7789 display.
+
+    config C5VRX_WAVESHARE_LCD_SMOKE_TEST
+        bool "Display-only LCD smoke test"
+        depends on C5VRX_WAVESHARE_LCD
+        default n
+        help
+            Start only the Waveshare board-power and LCD drivers and display
+            RGB565 color bars. RF, PARLIO, DAC and BitScrambler code is not
+            compiled or started. Use this first because the stock C5VRX IQ
+            GPIO map overlaps Waveshare LCD/I2C pins.
+endmenu
+
 menu "C5VRX board and video DAC"
     config C5VRX_CUSTOM_BOARD
         bool "Configure a custom ESP32-C5 board"
