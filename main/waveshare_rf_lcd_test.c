@@ -6,6 +6,7 @@
 #include "esp_attr.h"
 #include "esp_log.h"
 #include "esp_heap_caps.h"
+#include "esp_cache.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "waveshare_lcd.h"
@@ -133,6 +134,13 @@ static void preview_task(void *arg)
     TickType_t report_at = xTaskGetTickCount();
 
     for (;;) {
+        /* RX DMA writes behind the CPU cache. Invalidate the ring before
+         * observing it; without this the task can keep seeing the zero-filled
+         * cache lines that existed before PARLIO started. */
+        (void)esp_cache_msync(s_raw_ring, sizeof(s_raw_ring),
+                              ESP_CACHE_MSYNC_FLAG_DIR_M2C |
+                              ESP_CACHE_MSYNC_FLAG_UNALIGNED);
+
         /*
          * First-light observer only: RX continuously overwrites this cyclic
          * ring. A torn observation may drop a line, but cannot stall DMA.
@@ -186,6 +194,18 @@ static void preview_task(void *arg)
 
         TickType_t now = xTaskGetTickCount();
         if (now - report_at >= pdMS_TO_TICKS(1000)) {
+            unsigned nonzero = 0, changes = 0;
+            uint8_t minv = 255, maxv = 0, last = s_raw_ring[0];
+            for (unsigned i = 0; i < 4096; ++i) {
+                uint8_t v = s_raw_ring[i];
+                nonzero += v != 0;
+                changes += (i != 0 && v != last);
+                if (v < minv) minv = v;
+                if (v > maxv) maxv = v;
+                last = v;
+            }
+            ESP_LOGI(TAG, "IQ window: min=%u max=%u nonzero=%u/4096 changes=%u",
+                     minv, maxv, nonzero, changes);
             const char *std = report_pal > report_ntsc ? "PAL" :
                               report_ntsc > report_pal ? "NTSC" : "?";
             ESP_LOGI(TAG, "preview sync: hsync=%u/s ntsc_votes=%u pal_votes=%u standard=%s row=%u",
