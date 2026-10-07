@@ -92,6 +92,21 @@ menu "C5VRX board and video DAC"
         default 28
 endmenu
 
+menu "Waveshare ESP32-C5-Touch-LCD-2.8"
+    config C5VRX_WAVESHARE_LCD
+        bool "Build Waveshare ST7789 LCD backend"
+        default n
+        help
+            Build the 320x240 landscape ST7789 transport for the Waveshare
+            ESP32-C5-Touch-LCD-2.8. The LCD uses GPIO6 SCLK, GPIO7 MOSI,
+            GPIO9 D/C and GPIO10 CS. Reset and backlight are controlled through
+            the onboard CH32V003 I/O expander on I2C GPIO0/GPIO1.
+
+            This option only brings up the display transport. The production
+            PARLIO resistor-DAC video path remains unchanged until the digital
+            demodulator/scanline backend is selected in a later milestone.
+endmenu
+
 menu "C5VRX diagnostic probes"
     config C5VRX_PHY_PHASE_TAP_PROBE
         bool "Capture bounded MODEM_DIAG lane traces at boot, then start video"
