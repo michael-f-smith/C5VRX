@@ -284,6 +284,20 @@ static void preview_task(void *arg)
             ESP_LOGI(TAG, "IQ bit ones/4096: b0=%u b1=%u b2=%u b3=%u b4=%u b5=%u b6=%u b7=%u",
                      bit_ones[0], bit_ones[1], bit_ones[2], bit_ones[3],
                      bit_ones[4], bit_ones[5], bit_ones[6], bit_ones[7]);
+            unsigned eq01=0, eq12=0, eq23=0, eq45=0, eq56=0, eq67=0;
+            unsigned uniq[256] = {0}, uniq_count = 0;
+            for (unsigned i = 0; i < 4096; ++i) {
+                uint8_t v = s_raw_ring[i];
+                eq01 += (((v >> 0) ^ (v >> 1)) & 1u) == 0;
+                eq12 += (((v >> 1) ^ (v >> 2)) & 1u) == 0;
+                eq23 += (((v >> 2) ^ (v >> 3)) & 1u) == 0;
+                eq45 += (((v >> 4) ^ (v >> 5)) & 1u) == 0;
+                eq56 += (((v >> 5) ^ (v >> 6)) & 1u) == 0;
+                eq67 += (((v >> 6) ^ (v >> 7)) & 1u) == 0;
+                if (!uniq[v]) { uniq[v] = 1; ++uniq_count; }
+            }
+            ESP_LOGI(TAG, "IQ lane equality/4096: 01=%u 12=%u 23=%u 45=%u 56=%u 67=%u unique_bytes=%u",
+                     eq01, eq12, eq23, eq45, eq56, eq67, uniq_count);
             const char *std = report_pal > report_ntsc ? "PAL" :
                               report_ntsc > report_pal ? "NTSC" : "?";
             ESP_LOGI(TAG, "preview sync: hsync=%u/s ntsc_votes=%u pal_votes=%u standard=%s row=%u parity=%u hits=%u/%u",
