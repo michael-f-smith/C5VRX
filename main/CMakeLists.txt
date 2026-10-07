@@ -9,6 +9,15 @@ if(CONFIG_C5VRX_WAVESHARE_LCD_SMOKE_TEST)
     list(APPEND c5vrx_srcs
         "waveshare_lcd.c"
     )
+elseif(CONFIG_C5VRX_WAVESHARE_RF_LCD_TEST)
+    # Integrated bring-up: LCD + RF frontend + PARLIO RX only. The analog
+    # PARLIO TX / resistor DAC path remains disabled.
+    list(APPEND c5vrx_srcs
+        "waveshare_lcd.c"
+        "waveshare_rf_lcd_test.c"
+        "rf.c"
+        "arc_phy.c"
+    )
 else()
     list(APPEND c5vrx_srcs
         "board_config.c"
@@ -66,7 +75,7 @@ idf_component_register(
         esp_driver_gptimer
 )
 
-if(NOT CONFIG_C5VRX_WAVESHARE_LCD_SMOKE_TEST)
+if(NOT CONFIG_C5VRX_WAVESHARE_LCD_SMOKE_TEST AND NOT CONFIG_C5VRX_WAVESHARE_RF_LCD_TEST)
     # Proven default plus opt-in experimental demod/output paths.
     target_bitscrambler_add_src("fm.bsasm")
     target_bitscrambler_add_src("fm_relative_golden.bsasm")
