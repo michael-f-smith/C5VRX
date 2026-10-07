@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "board_config.h"
 #include "driver/parlio_rx.h"
+#include "driver/gpio.h"
 #include "esp_attr.h"
 #include "esp_log.h"
 #include "esp_heap_caps.h"
@@ -298,6 +299,37 @@ static void preview_task(void *arg)
             }
             ESP_LOGI(TAG, "IQ lane equality/4096: 01=%u 12=%u 23=%u 45=%u 56=%u 67=%u unique_bytes=%u",
                      eq01, eq12, eq23, eq45, eq56, eq67, uniq_count);
+            /* Independent observation path: read the physical GPIO pads
+             * directly. If these eight bits vary independently while PARLIO
+             * reports duplicated nibbles, the fault is PARLIO input routing.
+             * If the pad reads are duplicated too, MODEM_DIAG output routing
+             * (or the selected DIAG signals) is already wrong before PARLIO. */
+            static const gpio_num_t iq_gpio[8] = C5VRX_IQ_GPIOS;
+            unsigned pad_ones[8] = {0};
+            unsigned pad_eq01=0, pad_eq12=0, pad_eq23=0;
+            unsigned pad_eq45=0, pad_eq56=0, pad_eq67=0;
+            unsigned pad_unique[256] = {0}, pad_unique_count = 0;
+            for (unsigned n = 0; n < 4096; ++n) {
+                uint8_t v = 0;
+                for (unsigned b = 0; b < 8; ++b) {
+                    unsigned level = (unsigned)gpio_get_level(iq_gpio[b]) & 1u;
+                    v |= (uint8_t)(level << b);
+                    pad_ones[b] += level;
+                }
+                pad_eq01 += (((v >> 0) ^ (v >> 1)) & 1u) == 0;
+                pad_eq12 += (((v >> 1) ^ (v >> 2)) & 1u) == 0;
+                pad_eq23 += (((v >> 2) ^ (v >> 3)) & 1u) == 0;
+                pad_eq45 += (((v >> 4) ^ (v >> 5)) & 1u) == 0;
+                pad_eq56 += (((v >> 5) ^ (v >> 6)) & 1u) == 0;
+                pad_eq67 += (((v >> 6) ^ (v >> 7)) & 1u) == 0;
+                if (!pad_unique[v]) { pad_unique[v] = 1; ++pad_unique_count; }
+            }
+            ESP_LOGI(TAG, "PAD bit ones/4096: b0=%u b1=%u b2=%u b3=%u b4=%u b5=%u b6=%u b7=%u",
+                     pad_ones[0], pad_ones[1], pad_ones[2], pad_ones[3],
+                     pad_ones[4], pad_ones[5], pad_ones[6], pad_ones[7]);
+            ESP_LOGI(TAG, "PAD lane equality/4096: 01=%u 12=%u 23=%u 45=%u 56=%u 67=%u unique_bytes=%u",
+                     pad_eq01, pad_eq12, pad_eq23, pad_eq45, pad_eq56, pad_eq67,
+                     pad_unique_count);
             const char *std = report_pal > report_ntsc ? "PAL" :
                               report_ntsc > report_pal ? "NTSC" : "?";
             ESP_LOGI(TAG, "preview sync: hsync=%u/s ntsc_votes=%u pal_votes=%u standard=%s row=%u parity=%u hits=%u/%u",
